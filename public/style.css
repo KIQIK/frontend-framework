@@ -44,3 +44,11 @@
 .clock .icon.night {
     background-color: #2459a7;
 }
+
+.loading {
+    display: block;
+    padding: 20px;
+    width: 150px;
+    background-color: lightcyan;
+
+}

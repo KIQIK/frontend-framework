@@ -18,20 +18,38 @@
   //State
   let state = {
     time: new Date(),
-    lots: [
-      {
-        id: 1,
-        price: 20,
-        name: 'Apple',
-        description: 'Description product'
-      },
-      {
-        id: 2,
-        price: 15,
-        name: 'Xiaomi',
-        description: 'Description product'
+    lots: null
+  }
+
+
+  // Api
+  const api = {
+    get(url) {
+      switch (url) {
+        case '/lots':
+          return new Promise(resolve => {
+            setTimeout(() => {
+              resolve([
+                {
+                  id: 1,
+                  name: 'Apple',
+                  description: 'Description',
+                  price: 16
+                },
+                {
+                  id: 2,
+                  name: 'Xiaomi',
+                  description: 'Description',
+                  price: 18
+                }
+              ])
+            }, 1000)
+          })
+        default:
+          throw new Error('Unknown address')
+
       }
-    ]
+    }
   }
 
 
@@ -44,7 +62,6 @@
 
     return logo;
   }
-
   function Header() {
     const header = document.createElement('header');
     header.className = 'header';
@@ -52,7 +69,6 @@
 
     return header;
   }
-
   function Clock({time}) {
     const clock = document.createElement('div');
     clock.className = 'clock';
@@ -77,10 +93,18 @@
     
     return clock;
   }
-
-
-
+  function Loading() {
+  const node = document.createElement('div');
+  node.className = 'loading';
+  node.innerText = 'Loading...';
+  return node;
+}
   function Lots({lots}) {
+
+    if(lots === null) {
+        return Loading();
+    }
+
     const list = document.createElement('div');
     list.className = 'lots';
 
@@ -90,8 +114,8 @@
 
     return list;
   }
-
   function Lot({lot}) {
+
     const node = document.createElement('article');
     node.className = 'lot';
 
@@ -122,7 +146,6 @@
 
     return app;
   }
-
   function render(newDom, realDomRoot) {
     realDomRoot.innerHTML = '';
     realDomRoot.append(newDom);
@@ -146,6 +169,15 @@
     renderView(state);
 
   }, 1000);
+
+  api.get('/lots').then((lots) => {
+    state = {
+      ...state,
+      lots
+    }
+
+    renderView(state);
+  })
 
 
 </script>
