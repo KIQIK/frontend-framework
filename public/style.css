@@ -1,0 +1,28 @@
+.logo {
+    display: block;
+    width: 200px;
+    height: 100px;
+}
+
+.clock {
+    margin-top: 20px;
+    display: inline-block;
+    padding: 20px;
+
+    border: 2px black;
+    border-style: dashed;
+}
+
+.lots {
+    margin-top: 15px;
+}
+
+.lot {
+    display: inline-block;
+    padding: 10px;
+
+    border: 2px black;
+    border-style: dashed;
+
+    margin-right: 10px;
+}

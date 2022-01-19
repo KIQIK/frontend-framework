@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <link rel="stylesheet" href="style.css">
+  <title>Document</title>
+</head>
+<body>
+<!--
+<div class="app">
+  <header class="header"><img src="logo.png" alt="Logo" class="logo"></header>
+</div>
+
+<div class="lots">
+  <node class="lots">
+    <div class="price">15</div>
+    <h1>Apple</h1>
+    <p>Apple description</p>
+  </node>
+  <node class="lots">
+    <div class="price">20</div>
+    <h1>Xiaomi</h1>
+    <p>Xiaomi description</p>
+  </node>
+</div>
+-->
+<div id="root"></div>
+</body>
+<script>
+
+  const state = {
+    time: new Date(),
+    slots: [
+      {
+        id: 1,
+        price: 20,
+        name: 'Apple',
+        description: 'Description product'
+      },
+      {
+        id: 2,
+        price: 15,
+        name: 'Xiaomi',
+        description: 'Description product'
+      }
+    ]
+  }
+
+
+
+  const app = document.createElement('div');
+  app.className = 'app';
+
+  const header = document.createElement('header');
+  header.className = 'header';
+
+  const logo = document.createElement('img');
+  logo.className = 'logo';
+  logo.src = 'logo.png';
+
+  header.append(logo);
+
+  const clock = document.createElement('div');
+  clock.className = 'clock';
+  clock.innerText = state.time;
+
+  const lots = document.createElement('div');
+  lots.className = 'lots';
+
+  state.slots.forEach((lot) => {
+    const node = document.createElement('article');
+    node.className = 'lot';
+
+    const price = document.createElement('div');
+    price.innerText = lot.price;
+    node.append(price);
+
+    const name = document.createElement('h1');
+    name.innerText = lot.name;
+    node.append(name);
+
+    const description = document.createElement('p');
+    description.innerText = lot.description;
+    node.append(description);
+
+    lots.append(node)
+  })
+
+  app.append(header);
+  app.append(clock);
+  app.append(lots);
+
+
+  const domRoot = document.getElementById('root');
+  domRoot.append(app);
+
+
+</script>
+</html>
