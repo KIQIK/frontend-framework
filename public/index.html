@@ -9,31 +9,16 @@
   <title>Document</title>
 </head>
 <body>
-<!--
-<div class="app">
-  <header class="header"><img src="logo.png" alt="Logo" class="logo"></header>
-</div>
 
-<div class="lots">
-  <node class="lots">
-    <div class="price">15</div>
-    <h1>Apple</h1>
-    <p>Apple description</p>
-  </node>
-  <node class="lots">
-    <div class="price">20</div>
-    <h1>Xiaomi</h1>
-    <p>Xiaomi description</p>
-  </node>
-</div>
--->
 <div id="root"></div>
+
 </body>
 <script>
 
+  //State
   const state = {
     time: new Date(),
-    slots: [
+    lots: [
       {
         id: 1,
         price: 20,
@@ -50,27 +35,46 @@
   }
 
 
+// Functions
 
-  const app = document.createElement('div');
-  app.className = 'app';
+  function Logo() {
+    const logo = document.createElement('img');
+    logo.className = 'logo';
+    logo.src = 'logo.png';
 
-  const header = document.createElement('header');
-  header.className = 'header';
+    return logo;
+  }
 
-  const logo = document.createElement('img');
-  logo.className = 'logo';
-  logo.src = 'logo.png';
+  function Header() {
+    const header = document.createElement('header');
+    header.className = 'header';
+    header.append(Logo());
 
-  header.append(logo);
+    return header;
+  }
 
-  const clock = document.createElement('div');
-  clock.className = 'clock';
-  clock.innerText = state.time;
+  function Clock({time}) {
+    const clock = document.createElement('div');
+    clock.className = 'clock';
+    clock.innerText = time;
 
-  const lots = document.createElement('div');
-  lots.className = 'lots';
+    return clock;
+  }
 
-  state.slots.forEach((lot) => {
+
+
+  function Lots({lots}) {
+    const list = document.createElement('div');
+    list.className = 'lots';
+
+    lots.forEach((lot) => {
+      list.append(Lot({lot}))
+    })
+
+    return list;
+  }
+
+  function Lot({lot}) {
     const node = document.createElement('article');
     node.className = 'lot';
 
@@ -86,16 +90,30 @@
     description.innerText = lot.description;
     node.append(description);
 
-    lots.append(node)
-  })
+    return node;
+  }
 
-  app.append(header);
-  app.append(clock);
-  app.append(lots);
+  function App({state}) {
+    const app = document.createElement('div');
+    app.className = 'app';
 
+    app.append(Header());
+    app.append(Clock({
+      time: state.time
+    }));
+    app.append(Lots({lots: state.lots}));
+
+    return app;
+  }
+
+  function Render(newDom, realDomRoot) {
+    realDomRoot.append(newDom);
+  }
+
+  //Code
 
   const domRoot = document.getElementById('root');
-  domRoot.append(app);
+  Render(App({state}), domRoot);
 
 
 </script>
