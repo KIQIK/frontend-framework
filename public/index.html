@@ -21,7 +21,6 @@
     lots: null
   }
 
-
   // Api
   const api = {
     get(url) {
@@ -48,6 +47,20 @@
         default:
           throw new Error('Unknown address')
 
+      }
+    }
+  }
+
+  const stream = {
+    subscribe(channel, listener) {
+      const match = /price-(\d+)/.exec(channel)
+      if (match) {
+        setInterval(() => {
+          listener({
+            id: parseInt(match[1]),
+            price: Math.round(Math.random() * 10 + 30)
+          })
+        }, 400)
       }
     }
   }
@@ -157,6 +170,7 @@
 
   //Code
 
+
   const domRoot = document.getElementById('root');
   render(App({state}), domRoot);
 
@@ -177,7 +191,31 @@
     }
 
     renderView(state);
+
+
+    const onPrice = (data) => {
+      state = {
+        ...state,
+        lots: state.lots.map((lot) => {
+          if (lot.id === data.id) {
+            return {
+              ...lot,
+              price: data.price
+            }
+          }
+          return lot
+        })
+      }
+      renderView(state);
+    }
+
+    lots.forEach((lot) => {
+      stream.subscribe(`price-${lot.id}`, onPrice)
+    })
   })
+
+
+
 
 
 </script>
