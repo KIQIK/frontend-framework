@@ -16,7 +16,7 @@
 <script>
 
   //State
-  const state = {
+  let state = {
     time: new Date(),
     lots: [
       {
@@ -123,26 +123,27 @@
     return app;
   }
 
-  function Render(newDom, realDomRoot) {
+  function render(newDom, realDomRoot) {
+    realDomRoot.innerHTML = '';
     realDomRoot.append(newDom);
+  }
+
+  function renderView(state) {
+     render(App({state}), document.getElementById('root'))
   }
 
   //Code
 
   const domRoot = document.getElementById('root');
-  Render(App({state}), domRoot);
+  render(App({state}), domRoot);
 
   setInterval(()=>{
-    const time = new Date();
-    const clock = document.getElementById('root').querySelector('.app > .clock');
-
-    clock.querySelector('.value').innerText = time.toLocaleTimeString();
-
-    if(time.getHours() >= 7 && time.getHours() <= 21) {
-      clock.querySelector('.icon').className = 'icon day';
-    } else {
-      clock.querySelector('.icon').className = 'icon night';
+    state = {
+      ...state,
+      time: new Date()
     }
+
+    renderView(state);
 
   }, 1000);
 
