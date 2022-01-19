@@ -5,8 +5,9 @@
 }
 
 .clock {
+    display: inline-flex;
+    align-items: center;
     margin-top: 20px;
-    display: inline-block;
     padding: 20px;
 
     border: 2px black;
@@ -25,4 +26,21 @@
     border-style: dashed;
 
     margin-right: 10px;
+}
+
+.clock .icon {
+    display: inline-block;
+    vertical-align: middle;
+    width: 15px;
+    height: 15px;
+    border-radius: 15px;
+    margin-left: 5px;
+}
+
+.clock .icon.day {
+    background-color: #ef7b00;
+}
+
+.clock .icon.night {
+    background-color: #2459a7;
 }
