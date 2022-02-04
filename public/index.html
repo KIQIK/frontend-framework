@@ -7,13 +7,16 @@
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <link rel="stylesheet" href="style.css">
   <title>Document</title>
+  <script crossorigin src="https://unpkg.com/react@16/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"></script>
+  <script crossorigin src="https://unpkg.com/babel-standalone@6/babel.js"></script>
 </head>
 <body>
 
 <div id="root"></div>
 
 </body>
-<script>
+<script type="text/jsx">
 
   //State
   let state = {
@@ -66,146 +69,25 @@
   }
 
   // Render functions
-  const VDom = {
-    createElement: (type, config, ...children) => {
-      const key = config? (config.key || null) : null
-      const props = config || {}
-
-      if(children.length === 1) {
-        props.children = children[0]
-      } else {
-        props.children = children
-      }
-
-      return {
-        type,
-        key,
-        props
-      }
-    }
-  }
-
-  function render(virtualDom, realDomRoot) {
-    const evaluatedVirtualDom = evaluate(virtualDom)
-
-    const virtualDomRoot = {
-      type: realDomRoot.tagName.toLowerCase(),
-      props: {
-        id: realDomRoot.id,
-        ...realDomRoot.attributes,
-        children: [
-          evaluatedVirtualDom
-        ]
-      }
-    }
-
-    sync(virtualDomRoot, realDomRoot);
-  }
-
-  function evaluate(virtualNode) {
-
-    if(typeof virtualNode !== 'object') {
-      return virtualNode
-    }
-    if(typeof  virtualNode.type === 'function') {
-      return evaluate((virtualNode.type)(virtualNode.props))
-    }
-
-    const props = virtualNode.props || {}
-
-    return {
-      ...virtualNode,
-      props: {
-        ...props,
-        children: Array.isArray(props.children) ? props.children.map(evaluate) : [evaluate(props.children)]
-      }
-    }
-  }
-
-  function sync(virtualNode, realNode) {
-    //sync element
-    if(virtualNode.props) {
-      Object.entries(virtualNode.props).forEach(([name, value])=> {
-        if(name === 'children' && name === 'key') {
-          return
-        }
-        if(realNode[name] !== value){
-          realNode[name] = value
-        }
-      })
-    }
-
-    if(virtualNode.key) {
-      realNode.dataset.key = virtualNode.key
-    }
-
-    if(typeof virtualNode !== 'object' && virtualNode !== realNode.nodeValue) {
-      realNode.nodeValue = virtualNode
-    }
-
-    //sync child nodes
-
-    const virtualChildren = virtualNode.props ? virtualNode.props.children  || [] : [];
-    const realChildren = realNode.childNodes;
-
-
-    for (let i=0; i < virtualChildren.length || i < realChildren.lenght; i++) {
-      const virtual = virtualChildren[i];
-      const real = realChildren[i];
-
-      //Remove
-      if( virtual === undefined &&  real !== undefined) {
-        realNode.remove(real);
-      }
-
-      //Update
-      if( virtual !== undefined &&  real !== undefined && (virtual.type || '') === (real.tagName || '').toLowerCase()) {
-        sync(virtual, real)
-      }
-
-      //Replace
-      if( virtual !== undefined &&  real !== undefined && (virtual.type || '') !== (real.tagName || '').toLowerCase()) {
-        const newReal = createRealNodeByVirtual(virtual)
-        sync(virtual, newReal)
-        realNode.replaceChild(newReal, real);
-      }
-
-      //Add
-      if( virtual !== undefined &&  real === undefined) {
-        const newReal = createRealNodeByVirtual(virtual)
-        sync(virtual, newReal)
-        realNode.appendChild(newReal);
-      }
-    }
-
-  }
-
-  function createRealNodeByVirtual(virtual) {
-    if(typeof virtual !== 'object') {
-      return  document.createTextNode('')
-    }
-    return document.createElement(virtual.type)
-  }
 
   function renderView(state) {
-    render(VDom.createElement(App, {state}), document.getElementById('root'))
+    ReactDOM.render(<App state={state} />, document.getElementById('root'))
   }
-
-  console.log(VDom.createElement(App, {state}))
-
 
 
 
   // Function of elements
 
   function Logo() {
-    return VDom.createElement('img', { className: 'logo', src: 'logo.png'})
+    return <img className="logo" src="logo.png" alt=""/>
 
   }
 
   function Header() {
-    return VDom.createElement('header', {classname: 'header'},
-            VDom.createElement(Logo)
+    return (
+            <header className="header">
+              <Logo />
+            </header>
     )
   }
 
@@ -214,41 +96,51 @@
   function Clock({time}) {
     const isDay = time.getHours() >= 7 && time.getHours() <= 21
 
-    return VDom.createElement('div', {className: 'clock'},
-            VDom.createElement('span', {className: 'value'}, time.toLocaleTimeString()),
-            VDom.createElement('span', {className: isDay ? 'icon day' : 'icon night'})
+    return (
+            <div className="clock">
+              <span className="value">{time.toLocaleTimeString()}</span>
+              <span className="{isDay ? 'icon day' : 'icon night'}"></span>
+            </div>
     )
   }
 
   function Loading() {
-    return VDom.createElement('div', {className: 'loading'}, 'Loading...')
+    return React.createElement('div', {className: 'loading'}, 'Loading...')
 }
+
+
   function Lots({lots}) {
 
     if (lots === null) {
-      return VDom.createElement(Loading)
+      return <Loading />
     }
 
-   return VDom.createElement('div', {className: 'lots'},
-      lots.map((lot) => VDom.createElement(Lot, {lot, key: lot.id}))
-   )
+    return (
+            <div className="lots">
+              {lots.map((lot) => <Lot lot={lot} key={lot.id} />)}
+            </div>
+    )
   }
+
+
   function Lot({lot, key}) {
-
-      return VDom.createElement('article', {className: 'lot', key},
-              VDom.createElement('div', {className: 'price'}, lot.price),
-              VDom.createElement('h3', {}, lot.name),
-              VDom.createElement('p', {}, lot.description)
-      )
-
+    return (
+            <article className="lot">
+              <div className="price">{lot.price}</div>
+              <h3>{lot.name}</h3>
+              <p>lot.description</p>
+            </article>
+    )
   }
 
 
   function App({state}) {
-      return VDom.createElement('div', {className: 'app'},
-        VDom.createElement(Header),
-        VDom.createElement(Clock, {time: state.time}),
-        VDom.createElement(Lots, {lots: state.lots})
+      return (
+              <div className="app">
+                <Header />
+                <Clock time={state.time} />
+                <Lots lots={state.lots} />
+              </div>
       )
   }
 
@@ -257,7 +149,7 @@
 
   //Code
   const domRoot = document.getElementById('root');
-  render(App({state}), domRoot);
+  renderView(state)
 
   setInterval(()=>{
     state = {
