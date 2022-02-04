@@ -32,21 +32,20 @@
 
     subscribe(callback) {
       this.listeners.push(callback)
+
+      return () => {
+        const index  = this.listeners.indexOf(listener)
+        this.listeners.splice(index, 1)
+      }
     }
 
     getState() {
       return this.state
     }
 
-    changeState(diff) {
-      this.state = {
-        ...this.state,
-        ...(typeof diff === 'function' ? diff(this.state) : diff)
-      }
-
-      this.listeners.forEach((listener) => {
-        listener()
-      })
+    setState(state) {
+      this.state = (typeof state === 'function' ? state(this.state) : state)
+      this.listeners.forEach((listener) => listener())
     }
   }
 
@@ -102,7 +101,7 @@
     ReactDOM.render(<App state={state} />, document.getElementById('root'))
   }
 
-store.subscribe(() => {
+const unsubscribe = store.subscribe(() => {
   renderView(store.getState())
 })
 
@@ -178,34 +177,50 @@ store.subscribe(() => {
 
 
   //Code
+
+  function setTime(state, time) {
+    return {
+      ...state,
+      time
+    }
+  }
+
+  function setLots(state, lots) {
+    return {
+      ...state,
+      lots
+    }
+  }
+
+  function changeLotPrice(state, id, price) {
+    return {
+      ...state,
+      lots: state.lots.map((lot) => {
+        if (lot.id === id) {
+          return {
+            ...lot,
+            price: price
+          }
+        }
+        return lot
+      })
+    }
+  }
+
+
   const domRoot = document.getElementById('root');
   renderView(store.getState())
 
   setInterval(()=>{
-    store.changeState({
-      time: new Date()
-    })
+    store.setState((state) => setTime(state, new Date()))
 
   }, 1000);
 
   api.get('/lots').then((lots) => {
-    store.changeState({
-      lots
-    })
+    store.setState((state) => setLots(state, lots))
 
     const onPrice = (data) => {
-      store.changeState((state) => ({
-        lots: state.lots.map((lot) => {
-          if (lot.id === data.id) {
-            return {
-              ...lot,
-              price: data.price
-            }
-          }
-          return lot
-        })
-      }))
-
+      store.setState((state) => changeLotPrice(state, data.id, data.price))
     }
 
     lots.forEach((lot) => {
