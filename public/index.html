@@ -178,49 +178,58 @@ const unsubscribe = store.subscribe(() => {
 
   //Code
 
-  function setTime(state, time) {
-    return {
-      ...state,
-      time
-    }
-  }
 
-  function setLots(state, lots) {
-    return {
-      ...state,
-      lots
-    }
-  }
-
-  function changeLotPrice(state, id, price) {
-    return {
-      ...state,
-      lots: state.lots.map((lot) => {
-        if (lot.id === id) {
-          return {
-            ...lot,
-            price: price
-          }
+  function appReducer(state, action, params) {
+    switch(action) {
+      case 'setTime':
+        return {
+          ...state,
+          time: params.time
         }
-        return lot
-      })
+      case 'setLots':
+        return {
+          ...state,
+          lots: state.lots.map((lot) => {
+            if (lot.id === params.id) {
+              return {
+                ...lot,
+                price: params.price
+              }
+            }
+            return lot
+          })
+        }
+        case 'changeLotPrice':
+          return {
+            ...state,
+            lots: state.lots.map((lot) => {
+              if (lot.id === params.id) {
+                return {
+                  ...lot,
+                  price: params.price
+                }
+              }
+              return lot
+            })
+          }
+      default:
+        return state
     }
   }
-
 
   const domRoot = document.getElementById('root');
   renderView(store.getState())
 
   setInterval(()=>{
-    store.setState((state) => setTime(state, new Date()))
+    store.setState((state) => appReducer(state, 'setTime', {time: new Date()}))
 
   }, 1000);
 
   api.get('/lots').then((lots) => {
-    store.setState((state) => setLots(state, lots))
+    store.setState((state) => appReducer(state, 'setLots', {time: new Date()}))
 
     const onPrice = (data) => {
-      store.setState((state) => changeLotPrice(state, data.id, data.price))
+      store.setState((state) => appReducer(state, 'changeLotPrice', {time: new Date()}))
     }
 
     lots.forEach((lot) => {
