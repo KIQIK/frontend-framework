@@ -12,7 +12,7 @@
   <script crossorigin src="https://unpkg.com/redux@4/dist/redux.js"></script>
   <script crossorigin src="https://unpkg.com/react-redux@7/dist/react-redux.js"></script>
   <script crossorigin src="https://unpkg.com/redux-thunk@2.1/dist/redux-thunk.js"></script>
-  <script crossorigin src="https://unpkg.com/babel-standalone@6/babel.js"></script>
+  <script crossorigin src="https://unpkg.com/@babel/standalone@7.12.6/babel.js"></script>
   <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
   <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
 
@@ -265,6 +265,25 @@ function lotsLoadingPending () {
           Redux.applyMiddleware(thunk.withExtraArgument({api, stream}))
   )
 
+
+  const RouterContext = React.createContext()
+
+  function Link ({to, children, navigate}) {
+    const onClick = (event) => {
+      event.preventDefault()
+      navigate(to)
+    }
+
+    return <a href="" onClick={onClick}>{children}</a>
+  }
+
+  function Route ({path, location, children}) {
+    if (location === path) {
+      return children
+    }
+    return null
+  }
+
   // Render functions
 
 
@@ -320,6 +339,7 @@ function lotsLoadingPending () {
     return (
             <header className="header">
               <Logo />
+              <Router />
             </header>
     )
   }
@@ -479,6 +499,27 @@ function AlertError ({message}) {
   }
 
 
+  function Router () {
+    const [location, setLocation] = React.useState('a')
+    const navigate = (location) => {
+      setLocation(location)
+    }
+
+    return (
+            <>
+              <ul>
+                <li><Link to='a' navigate={navigate}>a</Link></li>
+                <li><Link to='b' navigate={navigate}>b</Link></li>
+                <li><Link to='c' navigate={navigate}>c</Link></li>
+              </ul>
+              <div>
+                <Route path='a' location={location}>Content A</Route>
+                <Route path='b' location={location}>Content B</Route>
+                <Route path='c' location={location}>Content C</Route>
+              </div>
+            </>
+    )
+  }
 
 
 
