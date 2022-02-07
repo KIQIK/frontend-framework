@@ -44,6 +44,10 @@ button * {
     vertical-align: middle;
 }
 
+button:disabled {
+    cursor: wait
+}
+
 button.favorite {
     background: #fff;
     border: 1px solid #999;
@@ -55,6 +59,19 @@ button.unfavorite {
     border: 1px solid #ff8c68;
     color: #dc0000;
 }
+
+button.favorite:disabled {
+    color: #ccc;
+    border: 1px solid #ccc;
+    background: #fff;
+}
+
+button.unfavorite:disabled {
+    border: 1px solid #ffc0ad;
+    color: #ff8c68;
+}
+
+
 
 .clock .icon {
     display: inline-block;
