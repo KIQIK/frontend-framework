@@ -9,6 +9,7 @@
   <title>Document</title>
   <script crossorigin src="https://unpkg.com/react@16/umd/react.development.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-router-dom@5.2.0/umd/react-router-dom.js"></script>
   <script crossorigin src="https://unpkg.com/redux@4/dist/redux.js"></script>
   <script crossorigin src="https://unpkg.com/react-redux@7/dist/react-redux.js"></script>
   <script crossorigin src="https://unpkg.com/redux-thunk@2.1/dist/redux-thunk.js"></script>
@@ -26,6 +27,8 @@
 
 
   const StoreContext = React.createContext()
+
+  const {BrowserRouter, Switch, Route, Link, NavLink, useParams} = ReactRouterDOM
 
   const LOTS_CLEAR = 'LOTS_CLEAR'
   const LOTS_LOADING_PENDING = 'LOTS_LOADING_PENDING'
@@ -280,68 +283,9 @@ function lotsLoadingPending () {
   )
 
 
-  const RouterContext = React.createContext()
 
-  function Link ({to, children, ...options}) {
-    return <RouterContext.Consumer>
-      {(value) => {
-        const href = to ? value.history.createHref(to) : ''
-        const onClick = (event) => {
-          event.preventDefault()
-          value.history.push(to)
-        }
-        return <a href={href} onClick={onClick} {...options}>{children}</a>
-      }}
-    </RouterContext.Consumer>
-  }
-
-  function matchPath(location, params) {
-     const regexp = new RegExp(
-            params.exact
-            ? '^' + params.path + '$'
-            :'^' + params.path + '(/.*)?'
-    )
-    return regexp.exec(location)
-  }
-
-  function Route (props) {
-    return <RouterContext.Consumer>
-      {(value) => {
-        const match = props.computedMatch
-                ? props.computedMatch
-                : matchPath(value.location, props)
-        if (match) {
-          return <RouterContext.Provider
-            value={{
-              ...value,
-              match
-            }}
-            children={props.children}
-            />
-        }
-        return null
-      }}
-    </RouterContext.Consumer>
-  }
-
-  function Switch ({children}) {
-    return (
-            <RouterContext.Consumer>
-              {(value) => {
-                for (const child of children) {
-                  const match = matchPath(value.location, child.props)
-                  if(match) {
-                    return React.cloneElement(child, { computedMatch: match })
-                  }
-              }
-                return null
-            }}
-            </RouterContext.Consumer>
-    )
-  }
 
   // Render functions
-
 
   function ClockContainer() {
     const [time, setTime] = React.useState(new Date())
@@ -372,8 +316,6 @@ function lotsLoadingPending () {
     )
   }
 
-
-  // Function of elements
 
   function App() {
     return (
@@ -568,92 +510,13 @@ function AlertError ({message, retry}) {
   }
 
 
-
-  function Router ({history, children}) {
-    const [location, setLocation] = React.useState(history.location)
-
-    React.useEffect(() => {
-        return history.listen((location) => {
-          setLocation(location)
-        })
-    }, [setLocation])
-
-    return (<RouterContext.Provider value={{location, history}} children={children} />)
-  }
-
-  function createBrowserHistory () {
-    return {
-      get location() {
-        const state = window.history.state
-        return state ? state.location : window.location.pathname
-      },
-      push (location) {
-        const state = {location}
-        window.history.pushState(state, '', location)
-        window.dispatchEvent(new PopStateEvent('popstate', {state: state}))
-    },
-      createHref (path) {
-        return path
-      },
-      listen (listener) {
-        const stateListener = (event) => {
-          const state = event.state
-          listener(state ? state.location : window.location.pathname)
-        }
-        window.addEventListener('popstate', stateListener, false)
-        return () => {
-          window.removeEventListener('popstate', stateListener)
-        }
-      }
-    }
-
-  }
-
-function BrowserRouter ({children}) {
-  const history = createBrowserHistory()
-
-  return <Router history={history} children={children}/>
-}
-
-function createHashHistory () {
-    return {
-      get location() {
-        return window.location.hash.slice(1) || '/'
-      },
-      push (location) {
-        window.location.hash = location
-      },
-      createHref (path) {
-        return '#' + path
-      },
-      listen (listener) {
-        const hashListener = () => {
-          listener(window.location.hash.slice(1))
-        }
-        window.addEventListener('hashchange', hashListener, false)
-        return () => {
-          window.removeEventListener('hashchange', hashListener)
-        }
-      }
-    }
-}
-
-function HashRouter ({children}) {
-  const history = createHashHistory()
-
-  return <Router history={history} children={children}/>
-}
-
-
-
-
   function Nav () {
     return (
             <nav>
               <ul>
-                <li><Link to='/'>Home</Link></li>
-                <li><Link to='/lots'>Lots</Link></li>
-                <li><Link to='/help'>Help</Link></li>
+                <li><NavLink to='/' exact>Home</NavLink></li>
+                <li><NavLink to='/lots'>Lots</NavLink></li>
+                <li><NavLink to='/help' exact>Help</NavLink></li>
               </ul>
             </nav>
     )
@@ -667,13 +530,13 @@ function HashRouter ({children}) {
         <Route path='/lots' exact>
           <LotsPage />
         </Route>
-        <Route path="/lots/(?<id>[\w-]+)" exact>
+        <Route path="/lots/:id" exact>
           <LotPage />
         </Route>
         <Route path='/help'>
           <HelpPage />
         </Route>
-        <Route>
+        <Route path='*'>
           <NotFound />
         </Route>
     </Switch>
@@ -724,11 +587,6 @@ function HashRouter ({children}) {
               <LotsContainerConnected />
             </>
     )
-  }
-
-  function useParams () {
-    const router = React.useContext(RouterContext)
-    return router.match.groups
   }
 
   function LotPage () {
