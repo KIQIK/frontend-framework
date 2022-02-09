@@ -71,6 +71,25 @@ button.unfavorite:disabled {
     color: #ff8c68;
 }
 
+.header nav {
+    margin-left: auto;
+}
+
+.header nav ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.header nav ul li {
+    margin: 0 15px 0 0;
+    padding: 0;
+    display: inline-block;
+}
+
+.header nav ul li:last-child {
+    margin: 0;
+}
 
 
 .clock .icon {

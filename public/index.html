@@ -27,7 +27,7 @@
 
   const StoreContext = React.createContext()
 
-
+  const LOTS_CLEAR = 'LOTS_CLEAR'
   const LOTS_LOADING_PENDING = 'LOTS_LOADING_PENDING'
   const LOTS_LOADING_SUCCESS = 'LOTS_LOADING_SUCCESS'
   const LOTS_LOADING_ERROR = 'LOTS_LOADING_ERROR'
@@ -118,10 +118,24 @@ function lotsLoadingPending () {
     }
   }
 
+  function lotsClear () {
+    return {
+      type: LOTS_CLEAR
+    }
+  }
+
 
 
   function auctionReducer(state = auctionInitialState, action) {
     switch(action.type) {
+      case LOTS_CLEAR:
+        return {
+          ...state,
+          lots: [],
+          loading: false,
+          loaded: false,
+          error: null
+        }
       case LOTS_LOADING_PENDING:
         return {
           ...state,
@@ -268,20 +282,62 @@ function lotsLoadingPending () {
 
   const RouterContext = React.createContext()
 
-  function Link ({to, children, navigate}) {
-    const onClick = (event) => {
-      event.preventDefault()
-      navigate(to)
-    }
-
-    return <a href="" onClick={onClick}>{children}</a>
+  function Link ({to, children, ...options}) {
+    return <RouterContext.Consumer>
+      {(value) => {
+        const href = to ? value.createHref(to) : ''
+        const onClick = (event) => {
+          event.preventDefault()
+          value.navigate(to)
+        }
+        return <a href={href} onClick={onClick} {...options}>{children}</a>
+      }}
+    </RouterContext.Consumer>
   }
 
-  function Route ({path, location, children}) {
-    if (location === path) {
-      return children
-    }
-    return null
+  function matchPath(location, params) {
+     const regexp = new RegExp(
+            params.exact
+            ? '^' + params.path + '$'
+            :'^' + params.path + '(/.*)?'
+    )
+    return regexp.exec(location)
+  }
+
+  function Route (props) {
+    return <RouterContext.Consumer>
+      {(value) => {
+        const match = props.computedMatch
+                ? props.computedMatch
+                : matchPath(value.location, props)
+        if (match) {
+          return <RouterContext.Provider
+            value={{
+              ...value,
+              match
+            }}
+            children={props.children}
+            />
+        }
+        return null
+      }}
+    </RouterContext.Consumer>
+  }
+
+  function Switch ({children}) {
+    return (
+            <RouterContext.Consumer>
+              {(value) => {
+                for (const child of children) {
+                  const match = matchPath(value.location, child.props)
+                  if(match) {
+                    return React.cloneElement(child, { computedMatch: match })
+                  }
+              }
+                return null
+            }}
+            </RouterContext.Consumer>
+    )
   }
 
   // Render functions
@@ -321,11 +377,12 @@ function lotsLoadingPending () {
 
   function App() {
     return (
-            <div className="app">
-              <Header />
-              <ClockContainer />
-              <LotsContainerConnected />
-            </div>
+            <Router>
+              <div className="app">
+                <Header />
+                <Content />
+              </div>
+            </Router>
     )
   }
 
@@ -339,7 +396,7 @@ function lotsLoadingPending () {
     return (
             <header className="header">
               <Logo />
-              <Router />
+                <Nav />
             </header>
     )
   }
@@ -356,11 +413,16 @@ function lotsLoadingPending () {
     return React.createElement('div', {className: 'loading'}, 'Loading...')
 }
 
-function AlertError ({message}) {
-    return React.createElement('div', {className: 'error'}, message)
+function AlertError ({message, retry}) {
+    return (
+            <div className="error">
+              <span>{message}</span>
+              {retry ? <ion-icon name="reload-circle" onClick={retry}/> : null}
+            </div>
+    )
 }
 
-  function LotsContainer ({lots, loading, loaded, error, load}) {
+  function LotsContainer ({lots, loading, loaded, error, load, unload}) {
 
     React.useEffect(() => {
       if (!loaded && !loading && error === null) {
@@ -368,8 +430,14 @@ function AlertError ({message}) {
       }
     }, [loaded, loading, error])
 
+    React.useEffect(() => {
+      if (loaded || error !== null) {
+        return unload
+      }
+    }, [loaded, error])
+
     if (error !== null) {
-      return <AlertError  message={error.message}/>
+      return <AlertError  message={error.message} retry={load}/>
     }
 
     if (loading) {
@@ -392,7 +460,8 @@ function AlertError ({message}) {
   })
 
   const LotsContainerMapDispatchToProps = {
-    load: loadLotsAsync
+    load: loadLotsAsync,
+    unload: lotsClear
   }
 
   const LotsContainerConnected = ReactRedux.connect(lotsContainerMapStateToProps, LotsContainerMapDispatchToProps)(LotsContainer)
@@ -453,7 +522,7 @@ function AlertError ({message}) {
     return (
             <article className={'lot' + (lot.favorite ? ' favorite' : '')}>
               <div className="price">{lot.price}</div>
-              <h3>{lot.name}</h3>
+              <h3><Link to={'/lots/' + lot.id}>{lot.name}</Link></h3>
               <p>{lot.description}</p>
               <Favorite
                       active={lot.favorite}
@@ -499,29 +568,129 @@ function AlertError ({message}) {
   }
 
 
-  function Router () {
-    const [location, setLocation] = React.useState('a')
-    const navigate = (location) => {
-      setLocation(location)
+  function Router ({children}) {
+    const state = window.history.state
+    const [location, setLocation] = React.useState(
+           state ? state.location :  window.location.pathname
+    )
+
+    React.useEffect(() => {
+      const listener = (event) => {
+        const state = event.state
+        setLocation(state ? state.location :  window.location.pathname)
+      }
+      window.addEventListener('popstate', listener, false)
+      return () => {
+        window.removeEventListener('popstate', listener)
+      }
+    }, [setLocation])
+
+    const createHref = (path) => {
+      return path
     }
 
+    const navigate = (location) => {
+      const state = {location}
+      window.history.pushState(state, '', location)
+      window.dispatchEvent(new PopStateEvent('popstate', {state: state}))
+    }
+
+    return (<RouterContext.Provider value={{location, navigate, createHref}} children={children} />)
+  }
+
+  function Nav () {
+    return (
+            <nav>
+              <ul>
+                <li><Link to='/'>Home</Link></li>
+                <li><Link to='/lots'>Lots</Link></li>
+                <li><Link to='/help'>Help</Link></li>
+              </ul>
+            </nav>
+    )
+  }
+
+  function Content () {
+   return ( <Switch>
+        <Route path='/' exact>
+          <HomePage />
+        </Route>
+        <Route path='/lots' exact>
+          <LotsPage />
+        </Route>
+        <Route path="/lots/(?<id>[\w-]+)" exact>
+          <LotPage />
+        </Route>
+        <Route path='/help'>
+          <HelpPage />
+        </Route>
+        <Route>
+          <NotFound />
+        </Route>
+    </Switch>
+   )
+  }
+
+  function NotFound () {
+    return <div>Not Found!</div>
+  }
+
+  function Page ({children}) {
+    return (
+            <section className="page">
+              {children}
+            </section>
+    )
+  }
+
+  function HomePage () {
+    return (
+            <Page>
+              <h1>Welcome</h1>
+              <p>Welcome to auction!</p>
+              <p>View <Link to="/lots">lots</Link> or read our
+              <Link to="/help"> help</Link></p>
+            </Page>
+    )
+  }
+
+  function HelpPage () {
+    return (
+            <Page>
+              <h1>Help</h1>
+              <p>Go to <Link to="/lots">lots</Link> and:</p>
+              <ol>
+                <li>Choose an interesting lot</li>
+                <li>Add the lot to favorite</li>
+              </ol>
+              <p>Back to <Link to="/home">home</Link></p>
+            </Page>
+    )
+  }
+
+  function LotsPage () {
     return (
             <>
-              <ul>
-                <li><Link to='a' navigate={navigate}>a</Link></li>
-                <li><Link to='b' navigate={navigate}>b</Link></li>
-                <li><Link to='c' navigate={navigate}>c</Link></li>
-              </ul>
-              <div>
-                <Route path='a' location={location}>Content A</Route>
-                <Route path='b' location={location}>Content B</Route>
-                <Route path='c' location={location}>Content C</Route>
-              </div>
+              <ClockContainer />
+              <LotsContainerConnected />
             </>
     )
   }
 
+  function useParams () {
+    const router = React.useContext(RouterContext)
+    return router.match.groups
+  }
 
+  function LotPage () {
+    const params = useParams()
+    return (
+            <Page>
+              <h1>Lot #{params.id}</h1>
+              <p>Lot Description</p>
+            </Page>
+    )
+  }
 
 
 
